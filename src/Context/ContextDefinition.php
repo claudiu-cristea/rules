@@ -7,7 +7,8 @@
 
 namespace Drupal\rules\Context;
 
-use \Drupal\Core\Plugin\Context\ContextDefinition as ContextDefinitionCore;
+use Drupal\Core\Plugin\Context\ContextDefinition as ContextDefinitionCore;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Extends the core context definition class with useful methods.
@@ -78,6 +79,21 @@ class ContextDefinition extends ContextDefinitionCore implements ContextDefiniti
     if (isset($values['class']) && !in_array('Drupal\rules\Context\ContextDefinitionInterface', class_implements($values['class']))) {
       throw new \Exception('ContextDefinition class must implement \Drupal\rules\Context\ContextDefinitionInterface.');
     }
+
+    // Annotation classes extract data from passed annotation classes directly
+    // used in the classes they pass to.
+    foreach (['label', 'description'] as $key) {
+      // @todo Remove this workaround in https://www.drupal.org/node/2362727.
+      if (isset($values[$key])) {
+        if ($values[$key] instanceof TranslatableMarkup) {
+          $values[$key] = (string) $values[$key];
+        }
+        elseif (!is_string($values[$key])) {
+          $values[$key] = NULL;
+        }
+      }
+    }
+
     // Default to Rules context definition class.
     $values['class'] = isset($values['class']) ? $values['class'] : '\Drupal\rules\Context\ContextDefinition';
     if (!isset($values['type'])) {
